@@ -5,3 +5,7 @@ CLI params select between (Lon Lat), Alt, (Speed heading), status data and a fre
 
 To Build
 gcc -Wall main.c -o gps
+
+To Run
+sudo ./gps
+(I can't be arsed to sort out the acces for the serial port)
