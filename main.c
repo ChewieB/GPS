@@ -3,12 +3,14 @@
 #include <termios.h>/* POSIX Terminal Control Definitions*/
 #include <errno.h>  /* ERROR Number Definitions          */
 #include <unistd.h> /* UNIX Standard Definitions         */
-char* main()
-//void main()
+#include <stdbool.h>
+#include <string.h>
+
+int OpenFile(void)
 {
 	int fd;
 	fd = open("/dev/ttyAMA0",O_RDWR | O_NOCTTY);
-	if(fd == 1)
+	if (fd == -1)
 	{
 		printf("Error! in Opening ttyAMA0\n");
 		printf("fd = [%d]\n",fd);
@@ -17,6 +19,18 @@ char* main()
 	{
 		printf("ttyAMA0 Opened Successfully\n");
 		printf("fd = [%i]\n",fd);
+	}
+
+	return fd;
+}
+
+int main()
+{
+	int fd = OpenFile();
+	if(fd == -1)
+	{
+		printf("File Open Error");
+		return -1;
 	}
 
 	struct termios SerialPortSettings;
@@ -46,7 +60,7 @@ char* main()
         if((tcsetattr(fd, TCSANOW, &SerialPortSettings)) != 0) // Set the attri
 	{
         	printf("  ERROR ! in Setting attributes\n");
-		return "Error setting attributes";
+		return -1;
 	}
 
         //------------------------------- Read data from serial port --------
@@ -54,19 +68,62 @@ char* main()
         tcflush(fd, TCIFLUSH);  // Discards old data in the rx buffer
 
         char read_buffer[150];  // Buffer to store the data received
-        int  bytes_read = 0;	// Number of bytes read by the read() system
+//        int  bytes_read = 0;	// Number of bytes read by the read() system
 
-	while(true)
+	bool ValidNEMA = false;
+
+	for (int i = 0; i < 30; i++)
 	{
-	        bytes_read = read(fd,&read_buffer,140); // Read the data
-	        printf("  Bytes Rxed [%i]\n", bytes_read); // Print the number of bytes
-		if (read_buffer[0] == '$' && read_buffer[1] == 'G')
+	       // bytes_read = 
+		read(fd,&read_buffer,140); // Read the data
+//	        printf("  Bytes Rxed [%i]\n", bytes_read); // Print the number of bytes
+		if (read_buffer[0] == '$' && 
+                    read_buffer[1] == 'G' &&
+                    read_buffer[2] == 'P' &&
+                    read_buffer[3] == 'G' &&
+                    read_buffer[4] == 'G' &&
+                    read_buffer[5] == 'A' )
 		{
-			printf("%s - break\n",read_buffer);
+			ValidNEMA = true;
 			break;
 		}
 	}
 
+	if (!ValidNEMA)
+	{
+		printf("No Valid NEMA sentences read :(\n");
+		return -1;
+	}
+
+	int NS =0;
+	char* p;
+
+	printf("data = [%s]\n", read_buffer);
+	int comma2 = 0;
+	int comma3 = 0;
+	p = strchr(read_buffer,',');
+	printf("first comma at [%d]\n",p - read_buffer);
+	p = strchr(p + 1, ',');
+	comma2 = p - read_buffer;
+	printf("second comma at [%d]\n", comma2);
+	p = strchr(p + 1, ',');
+	comma3 = p - read_buffer;
+	printf("third comma at [%d]\n", comma3);
+
+	char sub[1000];
+	int c = 0, length, position;
+	length = comma3 - comma2;
+	position = comma2;
+	printf("position = %d length = %d\n", position, length);
+	while (c < length)
+	{
+printf("nnn %d\n",c);
+		sub[c] = read_buffer[position + c - 1];
+      		c++;
+   	}
+printf("fhal");
+   	sub[c] = '\0';
+	printf("Northing = [%s]\n", sub);
 	close(fd);
-	return read_buffer;
+	return 1;
 }
