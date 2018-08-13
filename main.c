@@ -5,6 +5,7 @@
 #include <unistd.h> /* UNIX Standard Definitions         */
 #include <stdbool.h>
 #include <string.h>
+#include <stdlib.h>
 
 int OpenFile(void)
 {
@@ -95,7 +96,6 @@ int main()
 		return -1;
 	}
 
-	int NS =0;
 	char* p;
 
 	printf("data = [%s]\n", read_buffer);
@@ -115,15 +115,36 @@ int main()
 	length = comma3 - comma2;
 	position = comma2;
 	printf("position = %d length = %d\n", position, length);
-	while (c < length)
+	while (c < length - 1)
 	{
-printf("nnn %d\n",c);
-		sub[c] = read_buffer[position + c - 1];
+		sub[c] = read_buffer[position + 1 + c];
       		c++;
    	}
-printf("fhal");
    	sub[c] = '\0';
 	printf("Northing = [%s]\n", sub);
+
+	float fred = atof(sub)/100.0F;
+	printf("Number fred = [%f]\n", fred);
+
+	p = strchr(p + 1, ',');
+	int comma4 = p - read_buffer;
+	p = strchr(p + 1, ',');
+	int comma5 = p - read_buffer;
+	char ns = read_buffer[comma3 + 1];
+	printf("forth comma at [%d]\n", comma4);
+	printf("Lat hemi = [%c]\n", ns);
+
+	length = comma5 - comma4;
+	position = comma4 + 1;
+	for (int i = 0; i < length - 1; i++)
+	{
+		sub[i] = read_buffer[position + i];
+	}
+	sub[c] = '\0';
+	printf("Easting = [%s]\n", sub);
+	float East = atof(sub)/100.0F;
+
+	printf("****Result = %f %c %f ****\n", fred, ns, East);
 	close(fd);
 	return 1;
 }
